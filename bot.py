@@ -22,18 +22,26 @@ logger = logging.getLogger(__name__)
 
 SEARCH, RESULT = range(2)
 
+# Modes of printing the stations
+WT, NWT = range(2)
+
 TBOTID = os.environ['TBOTID']
 TBOTKEY  = os.environ['TBOTKEY']
 
 updater = Updater("{}:{}".format(TBOTID, TBOTKEY))
 
+def stren(str):
+    return str.encode('utf-8')
 
 # Generate human readable message of a given station
-def formatStation(station):
-    reply = "*{}* - {}\n".format(station['Description'].encode('utf-8'), station['CustomerCode'])
+def formatStation(station, mode):
+    reply = "🚏 __*{}*__ - {}\n".format(stren(station['Description']), stren(station['CustomerCode']))
 
     for line in station['Lines']:
-        reply = reply + "\n*{}* - *{}* - {}".format(line['Line']['LineCode'].replace('-','M'), line['WaitMessage'], line['Line']['LineDescription'])
+        if(mode == WT):
+            reply = reply + "\n🚌 *{}* - *{}* - {}".format(stren(line['Line']['LineCode'].replace('-','M')), line['WaitMessage'], stren(line['Line']['LineDescription']))
+        else:
+            reply = reply + "\n🚌 *{}* - {}".format(stren(line['Line']['LineCode'].replace('-','M')), stren(line['Line']['LineDescription']))
 
     return reply
 
@@ -54,17 +62,17 @@ def search(bot, update):
         update.message.reply_text("Looking for the waiting time ...")
         result = atm.getWaitingTime(res[0]['Code'])
         bot.send_message(chat_id=update.message.chat_id,
-                         text=formatStation(result),
+                         text=formatStation(result, WT),
                          parse_mode=ParseMode.MARKDOWN)
         return ConversationHandler.END
     elif (len(res) == 0):
         update.message.reply_text("No results found")
         return ConversationHandler.END
     else:
-        update.message.reply_text("I found {}".format(len(res)));
+        update.message.reply_text("I found {} stations, send code for wating times".format(len(res)));
         for station in res:
             bot.send_message(chat_id=update.message.chat_id,
-                             text=formatStation(station),
+                             text=formatStation(station, NWT),
                              parse_mode=ParseMode.MARKDOWN)
 
     return ConversationHandler.END
