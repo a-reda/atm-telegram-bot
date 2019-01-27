@@ -3,7 +3,7 @@
 
 from telegram.ext import Updater, CommandHandler, ConversationHandler, MessageHandler, Filters
 from telegram.ext import CallbackQueryHandler
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 
 import os
 import re
@@ -30,10 +30,10 @@ updater = Updater("{}:{}".format(TBOTID, TBOTKEY))
 
 # Generate human readable message of a given station
 def formatStation(station):
-    reply = "{} - {}\n".format(station['CustomerCode'], station['Description'])
+    reply = "*{}* - {}\n".format(station['Description'].encode('utf-8'), station['CustomerCode'])
 
     for line in station['Lines']:
-        reply = reply + "\n{} - {} - {}".format(line['Line']['LineCode'], line['WaitMessage'], line['Line']['LineDescription'])
+        reply = reply + "\n*{}* - *{}* - {}".format(line['Line']['LineCode'].replace('-','M'), line['WaitMessage'], line['Line']['LineDescription'])
 
     return reply
 
@@ -50,24 +50,29 @@ def cancel(bot, update):
 
 def search(bot, update):
     res = atm.searchStop(update.message.text)
-
     if (len(res) == 1):
-        update.message.reply_text("I will give you the waiting time")
+        update.message.reply_text("Looking for the waiting time ...")
         result = atm.getWaitingTime(res[0]['Code'])
-        update.message.reply_text(formatStation(result))
+        bot.send_message(chat_id=update.message.chat_id,
+                         text=formatStation(result),
+                         parse_mode=ParseMode.MARKDOWN)
         return ConversationHandler.END
     elif (len(res) == 0):
-        update.message.reply_text("No result found")
+        update.message.reply_text("No results found")
         return ConversationHandler.END
     else:
         update.message.reply_text("I found {}".format(len(res)));
+        for station in res:
+            bot.send_message(chat_id=update.message.chat_id,
+                             text=formatStation(station),
+                             parse_mode=ParseMode.MARKDOWN)
 
     return ConversationHandler.END
 
 conv_handler = ConversationHandler(
-entry_points=[MessageHandler(Filters.text, hello)],
+entry_points=[MessageHandler(Filters.text, search)],
 states={
-    SEARCH : [MessageHandler(Filters.text, search)]
+    #SEARCH : [MessageHandler(Filters.text, search)]
 },
 fallbacks=[CommandHandler('cancel', cancel)])
 
