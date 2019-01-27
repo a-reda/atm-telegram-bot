@@ -30,18 +30,15 @@ TBOTKEY  = os.environ['TBOTKEY']
 
 updater = Updater("{}:{}".format(TBOTID, TBOTKEY))
 
-def stren(str):
-    return str.encode('utf-8')
-
 # Generate human readable message of a given station
 def formatStation(station, mode):
-    reply = "🚏 __*{}*__ - {}\n".format(stren(station['Description']), stren(station['CustomerCode']))
+    reply = "🚏 __*{}*__ - {}\n".format(station['Description'], station['CustomerCode'])
 
     for line in station['Lines']:
         if(mode == WT):
-            reply = reply + "\n🚌 *{}* - *{}* - {}".format(stren(line['Line']['LineCode'].replace('-','M')), line['WaitMessage'], stren(line['Line']['LineDescription']))
+            reply = reply + "\n🚌 *{}* - *{}* - {}".format(line['Line']['LineCode'].replace('-','M'), line['WaitMessage'], line['Line']['LineDescription'])
         else:
-            reply = reply + "\n🚌 *{}* - {}".format(stren(line['Line']['LineCode'].replace('-','M')), stren(line['Line']['LineDescription']))
+            reply = reply + "\n🚌 *{}* - {}".format(line['Line']['LineCode'].replace('-','M'), line['Line']['LineDescription'])
 
     return reply
 
