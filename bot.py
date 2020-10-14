@@ -42,23 +42,23 @@ def formatStation(station, mode):
 
     return reply
 
-def hello(bot, update):
+def hello(update, context):
     update.message.reply_text('Hello {}'.format(update.message.from_user.first_name))
     return SEARCH
 
-def cancel(bot, update):
+def cancel(update, context):
     user = update.message.from_user
     logger.info("User %s canceled the conversation.", user.first_name)
     update.message.reply_text("Bye! I hope we can talk again some day.")
 
     return ConversationHandler.END
 
-def search(bot, update):
+def search(update, context):
     res = atm.searchStop(update.message.text)
     if (len(res) == 1):
         update.message.reply_text("Looking for the waiting time ...")
         result = atm.getWaitingTime(res[0]['Code'])
-        bot.send_message(chat_id=update.message.chat_id,
+        context.bot.send_message(chat_id=update.message.chat_id,
                          text=formatStation(result, WT),
                          parse_mode=ParseMode.MARKDOWN)
         return ConversationHandler.END
@@ -68,7 +68,7 @@ def search(bot, update):
     else:
         update.message.reply_text("I found {} stations, send code for wating times".format(len(res)));
         for station in res:
-            bot.send_message(chat_id=update.message.chat_id,
+            context.bot.send_message(chat_id=update.message.chat_id,
                              text=formatStation(station, NWT),
                              parse_mode=ParseMode.MARKDOWN)
 
@@ -82,6 +82,5 @@ states={
 fallbacks=[CommandHandler('cancel', cancel)])
 
 updater.dispatcher.add_handler(conv_handler)
-
 updater.start_polling()
 updater.idle()
