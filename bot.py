@@ -55,7 +55,6 @@ def cancel(update, context):
 
 def search(update, context):
     res = atm.searchStop(update.message.text)
-    print(len(res))
     if (len(res) == 0):
         update.message.reply_text("No results found")
         return ConversationHandler.END
