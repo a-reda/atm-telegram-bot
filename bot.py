@@ -55,15 +55,16 @@ def cancel(update, context):
 
 def search(update, context):
     res = atm.searchStop(update.message.text)
-    if (len(res) == 1):
+    print(len(res))
+    if (len(res) == 0):
+        update.message.reply_text("No results found")
+        return ConversationHandler.END
+    elif (len(res) == 1 or (len(res) > 1 and res[0]['CustomerCode'] == update.message.text)):
         update.message.reply_text("Looking for the waiting time ...")
         result = atm.getWaitingTime(res[0]['Code'])
         context.bot.send_message(chat_id=update.message.chat_id,
                          text=formatStation(result, WT),
                          parse_mode=ParseMode.MARKDOWN)
-        return ConversationHandler.END
-    elif (len(res) == 0):
-        update.message.reply_text("No results found")
         return ConversationHandler.END
     else:
         update.message.reply_text("I found {} stations, send code for wating times".format(len(res)));
