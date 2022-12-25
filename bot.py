@@ -53,21 +53,39 @@ def cancel(update, context):
 
     return ConversationHandler.END
 
+def findInResults(stationCode, results):
+    for index, s in enumerate(results):
+        if s['CustomerCode'] == stationCode:
+            return index
+    return -1
+
 def search(update, context):
-    res = atm.searchStop(update.message.text)
-    if (len(res) == 0):
+    results = atm.searchStop(update.message.text)
+    logger.info('message - '+ update.message.text)
+
+    #No result case
+    if (len(results) == 0):
         update.message.reply_text("No results found")
         return ConversationHandler.END
-    elif (len(res) == 1 or (len(res) > 1 and res[0]['CustomerCode'] == update.message.text)):
+
+    # Many results
+    index = findInResults(update.message.text, results)
+    if (index > -1): # Exact match
         update.message.reply_text("Looking for the waiting time ...")
-        result = atm.getWaitingTime(res[0]['Code'])
+        station = atm.getWaitingTime(results[index]['Code'])
         context.bot.send_message(chat_id=update.message.chat_id,
-                         text=formatStation(result, WT),
+                         text=formatStation(station, WT),
                          parse_mode=ParseMode.MARKDOWN)
+        context.bot.send_venue(chat_id=update.message.chat_id,
+                         latitude=station['Location']['Y'],
+                         longitude=station['Location']['X'],
+                         title=station['Description'],
+                         address=station['Address'])
         return ConversationHandler.END
-    else:
-        update.message.reply_text("I found {} stations, send code for wating times".format(len(res)));
-        for station in res:
+    
+    else: # Partial match 
+        update.message.reply_text("I found {} stations, send code for wating times".format(len(results)));
+        for station in results:
             context.bot.send_message(chat_id=update.message.chat_id,
                              text=formatStation(station, NWT),
                              parse_mode=ParseMode.MARKDOWN)
